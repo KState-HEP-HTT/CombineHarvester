@@ -1,4 +1,14 @@
 #!/usr/bin/env python
+
+from argparse import ArgumentParser
+
+parser = ArgumentParser(description='Unroll 2D distributions to be used by combine for limit setting')
+parser.add_argument('--channel', '-c', action='store', default='tt', dest='channel', help='channel to unroll')
+parser.add_argument('--input', '-i', action='store', default='final_nominal.root', dest='fin', help='name of input file')
+parser.add_argument('--syst', '-s', action='store_true', default=False, dest='syst', help='use systematics')
+args = parser.parse_args()
+
+
 import ROOT
 import re
 from array import array
@@ -66,34 +76,35 @@ ROOT.gStyle.SetOptStat(0)
 c=ROOT.TCanvas("canvas","",0,0,1800,600)
 c.cd()
 
-file=ROOT.TFile("final_nominal.root","r")
-file1D=ROOT.TFile("htt_tt.inputs-sm-13TeV-2D.root","recreate")
+file=ROOT.TFile(args.fin,"r")
+file1D=ROOT.TFile("htt_{}.inputs-sm-13TeV-2D.root".format(args.channel),"recreate")
 
 adapt=ROOT.gROOT.GetColor(12)
 new_idx=ROOT.gROOT.GetListOfColors().GetSize() + 1
 trans=ROOT.TColor(new_idx, adapt.GetRed(), adapt.GetGreen(),adapt.GetBlue(), "",0.5)
 
-categories=["tt_0jet","tt_boosted","tt_vbf"] # input dir names
-cat=["tt_0jet","tt_boosted","tt_vbf"] # outout dir names
-processes=["data_obs","ZTT","W","QCD","ZL","ZJ","TTT","TTJ","VVT","VVJ","EWKZ","ggH125","VBF125","WH125","ZH125"] # input histos
+categories = [args.channel + cat for cat in ['_0jet', '_boosted', '_vbf']]
+cat = [acat for acat in categories]  # outout dir names
+processes=["data_obs","ZTT","W","QCD","ZL","ZJ","TTT","TTJ","VV","EWKZ","ggH125","VBF125","WH125"]#,"ZH125"] # input histos
 
+if args.syst:
+  systematics = [ # systematics
+      "_CMS_htt_dyShape_13TeV",
+      "_CMS_htt_jetToTauFake_13TeV",
+      "_CMS_htt_ttbarShape_13TeV",
+      "_CMS_scale_t_13TeV",
+      "_CMS_scale_t_1prong_13TeV",
+      "_CMS_scale_t_1prong1pizero_13TeV",
+      "_CMS_scale_t_3prong_13TeV",
+      "_CMS_scale_met_unclustered_13TeV",
+      "_CMS_scale_met_clustered_13TeV",
+      "_CMS_scale_j_13TeV",
+      "_CMS_htt_zmumuShape_VBF_13TeV"
+  ]
+else:
+  systematics = []
 
-systematics=[ # systematics
-    "_CMS_htt_dyShape_13TeV",
-    "_CMS_htt_jetToTauFake_13TeV",
-    "_CMS_htt_ttbarShape_13TeV",
-    "_CMS_scale_t_13TeV",
-    "_CMS_scale_t_1prong_13TeV",
-    "_CMS_scale_t_1prong1pizero_13TeV",
-    "_CMS_scale_t_3prong_13TeV",
-    "_CMS_scale_met_unclustered_13TeV",
-    "_CMS_scale_met_clustered_13TeV",
-    "_CMS_scale_j_13TeV",
-    "_CMS_htt_zmumuShape_VBF_13TeV"
-    ]
-
-
-processes_plot_bkg=["ZTT","W","QCD","ZL","ZJ","TTT","TTJ","VVT","VVJ","EWKZ"] # bkg processes for plot
+processes_plot_bkg=["ZTT","W","QCD","ZL","ZJ","TTT","TTJ","VV","EWKZ"] # bkg processes for plot
 processes_plot_signal=["ggH125","VBF125",] # signal processes for plot
 ncat=3
 
